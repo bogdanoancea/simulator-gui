@@ -179,9 +179,74 @@ ipcMain.on("run_simulation", (event, args) => {
 		dialog.showMessageBoxSync(mainWindow, options);
 		return;
 	}
+
+	if (mapFile === null) {
+		const options = {
+			type: 'info',
+			buttons: ['OK'],
+			defaultId: 1,
+			title: 'Information',
+			message: 'Select the map file!',
+		  };
+		
+		dialog.showMessageBoxSync(mainWindow, options);
+		return;
+	}
+
+	if (simulationFile === null) {
+		const options = {
+			type: 'info',
+			buttons: ['OK'],
+			defaultId: 1,
+			title: 'Information',
+			message: 'Select the simulation configuration file!',
+		  };
+		
+		dialog.showMessageBoxSync(mainWindow, options);
+		return;
+	}
+
+	if (personsFile === null) {
+		const options = {
+			type: 'info',
+			buttons: ['OK'],
+			defaultId: 1,
+			title: 'Information',
+			message: 'Select the persons configuration file!',
+		  };
+		
+		dialog.showMessageBoxSync(mainWindow, options);
+		return;
+	}
+	if (antennasFile === null) {
+		const options = {
+			type: 'info',
+			buttons: ['OK'],
+			defaultId: 1,
+			title: 'Information',
+			message: 'Select the antennas configuration file!',
+		  };
+		
+		dialog.showMessageBoxSync(mainWindow, options);
+		return;
+	}
+	if(!fs.existsSync(path.join(simulator_path, "simulator.exe") )) {
+		const options = {
+			type: 'info',
+			buttons: ['OK'],
+			defaultId: 1,
+			title: 'Information',
+			message: 'Check the executable file!',
+		  };
+		
+		dialog.showMessageBoxSync(mainWindow, options);
+		return;
+	}
 	console.log(simulator_path);
-	let cmdLine:string = "\"" + path.join(simulator_path, "simulator.exe") + "\"" + " -m " + mapFile + " -s " + simulationFile + " -a " + antennasFile + " -p " + personsFile + "\r";
-	proc.write(cmdLine);
+	let cdircmd = "cd " + __dirname + "\r";
+	proc.write(cdircmd);
+	// let cmdLine:string = "\"" + path.join(simulator_path, "simulator.exe") + "\"" + " -m " + "\"" + mapFile + "\"" + " -s " + "\"" + simulationFile + "\"" + " -a " + "\"" + antennasFile + "\"" +" -p " + "\"" + personsFile + "\""+ "\r";
+	// proc.write(cmdLine);
 
 	proc.onData((data) => {
 		mainWindow.webContents.send("terminal-incData", data);
