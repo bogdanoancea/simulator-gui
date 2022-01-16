@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Mobile Network Simulator</title>
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
+    <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="node_modules/xterm/css/xterm.css" />
+    <script src="node_modules/xterm/lib/xterm.js"></script>
+
+</head>
+<style scoped>
+    html,
+    body {
+        height: 100%
+    }
+    .loader {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #ffffff;
+        position: fixed;
+        z-index: 1050;
+        left: calc(50% - 250px);
+        top: calc(50% - 70px);
+        text-align: center;
+    }
+
+    .cover {
+        top: 0;
+        display: block;
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        z-index: 1040;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .stop-scrolling {
+        height: 100%;
+        overflow: hidden;
+    }
+</style>
+
+<body>
+    <div class="loader d-none" id="loader">Se pregătesc datele<br>Vă rugăm așteptați...</div>
+    <div class="cover d-none" id="cover"></div>
+
+    <div class="container">
+        
+        <div class="row my-1">
+            <div class="col-md-12 text-center">
+                <img src="./src/assets/simgui.png" alt="simgui" style="max-width: 800px; max-height: 80px; opacity: 0.7;">
+            </div>
+        </div>
+
+        <div class="row justify-content-md-center">
+            <div class="col-12 text-center" style="margin-top: 10px;">
+                <h4 id="_appTitle">SimGUI <br> Mobile Network Simulator GUI</h4>
+            </div>
+        </div>
+        <div class="container">
+            <br><br>
+        </div>
+
+        <div class="row" >
+            <div class="col">
+                <div class="col text-center">
+                    <button class="btn btn-info btn-lg" style="width: 100%; min-height: 50px; margin-bottom: 15px;" id="map_file">
+                        Load map file
+                    </button>
+                </div>
+                
+                <div class="col text-center">
+                    <button class="btn btn-info btn-lg" style="width: 100%; min-height: 50px; margin-bottom: 15px;" id="simulation_file">
+                        Load simulation file
+                    </button>
+                </div>
+                <div class="col text-center">
+                    <button class="btn btn-info btn-lg" style="width: 100%; min-height: 50px; margin-bottom: 15px;" id="antennas_file">
+                        Load antennas file
+                    </button>
+                </div>
+
+                <div class="col text-center">
+                    <button class="btn btn-info btn-lg" style="width: 100%; min-height: 50px; margin-bottom: 15px;" id="persons_file">
+                        Load persons file
+                    </button>
+                </div>
+                <div class="col text-center">
+                    <button class="btn btn-info btn-lg" style="width: 100%; min-height: 50px; margin-bottom: 15px;" id="run_simulation">
+                        Run simulation
+                    </button>
+                </div>
+                <div class="col text-center">
+                    <button class="btn btn-info btn-lg" style="width: 100%; min-height: 50px; margin-bottom: 15px;" id="open_output">
+                        Open output folder
+                    </button>
+                </div>
+
+
+            </div>
+
+            <div class="col-8 text-center">
+                <div  style="width: 100%; min-height: 50px; margin-bottom: 10px;" id="terminal"></div>
+               
+            </div>
+
+        </div>
+        <br>
+<!--
+        <div class="row" style="margin-top: 20px;" id="spaceTop">
+                <div class="col text-center">
+                    <button class="btn btn-info btn-md" style="width: 30%; min-height: 50px; margin-bottom: 10px;" id="simulator_path">
+                        Set simulation software path
+                    </button>
+                </div>
+        </div>
+-->
+        <div class="row mt-3">
+            <div class="col text-center">
+                          
+                    <button class="ms-3 btn btn-dark btn-sm" id="simulator_path">Set simulation software path</button>
+              
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- You can also require other files to run in this process -->
+    <script src="./dist/renderer.js"></script>
+</body>
+
+</html>

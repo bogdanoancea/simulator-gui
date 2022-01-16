@@ -1,0 +1,61 @@
+{
+    "name": "simulator-gui",
+    "version": "1.0.0",
+    "description": "Mobile Network Simulator GUI",
+    "main": "./dist/main.js",
+    "scripts": {
+        "build": "tsc",
+        "watch": "tsc -w",
+        "lint": "eslint -c .eslintrc --ext .ts ./src",
+        "start": "npm run build && electron ./dist/main.js",
+        "dist": "npm run build && electron-builder",
+        "pack": "npm run build && electron-builder --dir"
+    },
+    "repository": "https://github.com/electron/electron-quick-start-typescript",
+    "author": "WB",
+    "license": "CC0-1.0",
+    "devDependencies": {
+        "electron": "^13.1.7",
+        "electron-builder": "^22.11.7",
+        "electron-rebuild": "^2.3.5",
+        "eslint": "^7.30.0",
+        "typescript": "^4.3.5"
+    },
+    "dependencies": {
+        "bootstrap": "^5.0.2",
+        "fs": "0.0.1-security",
+        "node-pty": "^0.10.1",
+        "react": "^17.0.2",
+        "sqlite3": "^5.0.2",
+        "tippy.js": "^6.3.7",
+        "xterm": "^4.16.0"
+    },
+    "build": {
+        "appId": "simulator.gui",
+        "productName": "Mobile Network Simulator",
+        "directories": {
+            "output": "build/output"
+        },
+        "extraResources": [
+           
+            {
+                "from": "src/assets/",
+                "to": "assets"
+            },
+            {
+                "from": "src/page/",
+                "to": "page"
+            }
+        ],
+        "win": {
+            "icon": "build/icon.png",
+            "legalTrademarks": "MIT Licence",
+            "target": {
+                "target": "dir"
+            }
+        },
+        "mac": {
+            "target": "dir"
+        }
+    }
+}
