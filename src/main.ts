@@ -246,7 +246,12 @@ ipcMain.on("run_simulation", (event, args) => {
 		dialog.showMessageBoxSync(mainWindow, options);
 		return;
 	}
-	if(!fs.existsSync(path.join(simulator_path, "simulator.exe") )) {
+	let simulator_exe:string = null;
+	if(process.platform == 'win32')
+		simulator_exe = "simulator.exe";
+	else
+		simulator_exe = 'simulator';
+	if(!fs.existsSync(path.join(simulator_path, simulator_exe) )) {
 		const options = {
 			type: 'info',
 			buttons: ['OK'],
@@ -261,7 +266,7 @@ ipcMain.on("run_simulation", (event, args) => {
 	console.log(simulator_path);
 	let cdircmd = "cd /d " + os.homedir() + "\r";
 	proc.write(cdircmd);
-	let cmdLine:string = "\"" + path.join(simulator_path, "simulator.exe") + "\"" + " -m " + "\"" + mapFile + "\"" + " -s " + "\"" + simulationFile + "\"" + " -a " + "\"" + antennasFile + "\"" +" -p " + "\"" + personsFile + "\""+ "\r";
+	let cmdLine:string = "\"" + path.join(simulator_path, simulator_exe) + "\"" + " -m " + "\"" + mapFile + "\"" + " -s " + "\"" + simulationFile + "\"" + " -a " + "\"" + antennasFile + "\"" +" -p " + "\"" + personsFile + "\""+ "\r";
 	proc.write(cmdLine);
 
 	proc.onData((data) => {
