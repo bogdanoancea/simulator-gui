@@ -1,20 +1,23 @@
-process.env.NODE_ENV = "development";
-// process.env.NODE_ENV = 'production';
+//process.env.NODE_ENV = "development";
+ process.env.NODE_ENV = 'production';
 
-import { app, BrowserWindow, dialog, ipcMain, ipcRenderer } from "electron";
+import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import * as path from "path";
 import * as fs from 'fs';
 
 
 import {spawn} from "node-pty";
 
-
+import * as xml2js from 'xml2js';
+import * as cp from 'child_process'
+import * as os from 'os';
 
 let mapFile:string  = null;
 let simulationFile:string  = null;
 let personsFile:string  = null;
 let antennasFile:string  = null;
 let simulator_path:string = null;
+let outout_folder:string = null;
 
 // ============================================================
 let mainWindow: BrowserWindow = null;
@@ -107,12 +110,25 @@ ipcMain.on("map_file", (event, args) => {
 ipcMain.on("simulation_file", (event, args) => {
 	dialog.showOpenDialog(mainWindow, {
 		properties: ['openFile']
-	  }).then(result => {
+	}).then(result => {
 		if(!result.canceled)
 			simulationFile = result.filePaths[0];
+			var parser:any = new xml2js.Parser();
+			fs.readFile(simulationFile, function(err, data) {
+				parser.parseString(data, function (err:any, result:any) {
+					var odir: string = result.simulation.output_dir[0];
+					if(odir != undefined)
+						outout_folder = odir;
+					else
+						outout_folder = "output";
+				});
+			});
+		
 	  }).catch(err => {
 		console.log(err)
 	  })
+
+	
 });
 
 
@@ -143,11 +159,11 @@ ipcMain.on("simulator_path", (event, args) => {
 	dialog.showOpenDialog(mainWindow, {
 		properties: ['openDirectory']
 	  }).then(result => {
-		if(!result.canceled)
+		if(!result.canceled) {
 			simulator_path = result.filePaths[0];
-			//let jsonobj = JSON.stringify(simulator_path);
 			fs.writeFileSync('config.json', simulator_path);
 			console.log(simulator_path);
+		}
 	  }).catch(err => {
 		console.log(err)
 	  })
@@ -164,7 +180,7 @@ ipcMain.on("run_simulation", (event, args) => {
 		env: process.env
 	  });
 	
-	if(simulator_path === null) {
+	if(simulator_path === null && fs.existsSync('config.json')) {
 		simulator_path = fs.readFileSync('config.json').toString();
 	}
 	if (simulator_path === null) {
@@ -243,10 +259,10 @@ ipcMain.on("run_simulation", (event, args) => {
 		return;
 	}
 	console.log(simulator_path);
-	let cdircmd = "cd " + __dirname + "\r";
+	let cdircmd = "cd /d " + os.homedir() + "\r";
 	proc.write(cdircmd);
-	// let cmdLine:string = "\"" + path.join(simulator_path, "simulator.exe") + "\"" + " -m " + "\"" + mapFile + "\"" + " -s " + "\"" + simulationFile + "\"" + " -a " + "\"" + antennasFile + "\"" +" -p " + "\"" + personsFile + "\""+ "\r";
-	// proc.write(cmdLine);
+	let cmdLine:string = "\"" + path.join(simulator_path, "simulator.exe") + "\"" + " -m " + "\"" + mapFile + "\"" + " -s " + "\"" + simulationFile + "\"" + " -a " + "\"" + antennasFile + "\"" +" -p " + "\"" + personsFile + "\""+ "\r";
+	proc.write(cmdLine);
 
 	proc.onData((data) => {
 		mainWindow.webContents.send("terminal-incData", data);
@@ -264,16 +280,19 @@ ipcMain.on("run_simulation", (event, args) => {
 });
 
 ipcMain.on("open_output", (event, args) => {
-	//require('child_process').exec('start "" "c:\\test"');
-	const options = {
-		type: 'info',
-		buttons: ['OK'],
-		defaultId: 1,
-		title: 'Information',
-		message: 'Not implemented yet!',
-	  };
-	
-	dialog.showMessageBoxSync(mainWindow, options);
+	if(outout_folder != null)
+		cp.exec("start "+ path.join(os.homedir(), outout_folder) );
+	else {
+		const options = {
+			type: 'info',
+			buttons: ['OK'],
+			defaultId: 1,
+			title: 'Information',
+			message: 'Run a simulation first!',
+		  };
+		
+		dialog.showMessageBoxSync(mainWindow, options);
+	}
 
 });
 
