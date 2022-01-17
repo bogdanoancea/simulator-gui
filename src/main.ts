@@ -172,13 +172,25 @@ ipcMain.on("simulator_path", (event, args) => {
 
 
 ipcMain.on("run_simulation", (event, args) => {
-	const proc = spawn('cmd.exe', [], {
-		name: 'xterm-color',
-		cols: 180,
-		rows: 50,
-		cwd: process.env.HOME,
-		env: process.env
-	  });
+	let proc:any = null;
+	if(process.platform == 'win32')
+			proc = spawn('cmd.exe', [], {
+			name: 'xterm-color',
+			cols: 180,
+			rows: 50,
+			cwd: process.env.HOME,
+			env: process.env
+		});
+	else {
+		proc = spawn('sh', [], {
+			name: 'xterm-color',
+			cols: 180,
+			rows: 50,
+			cwd: process.env.HOME,
+			env: process.env
+		});
+	}
+
 	
 	if(simulator_path === null && fs.existsSync('config.json')) {
 		simulator_path = fs.readFileSync('config.json').toString();
@@ -264,12 +276,16 @@ ipcMain.on("run_simulation", (event, args) => {
 		return;
 	}
 	console.log(simulator_path);
-	let cdircmd = "cd /d " + os.homedir() + "\r";
+	let cdircmd : string = null;
+	if(process.platform == 'win32')
+		cdircmd = "cd /d " + os.homedir() + "\r";
+	else
+		cdircmd = "cd " + os.homedir() + "\r";
 	proc.write(cdircmd);
 	let cmdLine:string = "\"" + path.join(simulator_path, simulator_exe) + "\"" + " -m " + "\"" + mapFile + "\"" + " -s " + "\"" + simulationFile + "\"" + " -a " + "\"" + antennasFile + "\"" +" -p " + "\"" + personsFile + "\""+ "\r";
 	proc.write(cmdLine);
 
-	proc.onData((data) => {
+	proc.onData((data:any) => {
 		mainWindow.webContents.send("terminal-incData", data);
 	  });
   
@@ -285,8 +301,11 @@ ipcMain.on("run_simulation", (event, args) => {
 });
 
 ipcMain.on("open_output", (event, args) => {
-	if(outout_folder != null)
+	if(outout_folder != null && process.platform == 'win32')
 		cp.exec("start "+ path.join(os.homedir(), outout_folder) );
+	else if (outout_folder != null && process.platform == 'darwin') {
+		cp.exec("open "+ path.join(os.homedir(), outout_folder) );
+	}
 	else {
 		const options = {
 			type: 'info',
