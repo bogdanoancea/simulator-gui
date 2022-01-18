@@ -59,6 +59,41 @@ document.getElementById('simulator_path').addEventListener('click', function sho
     });
 });
 
+document.getElementById('default_simulator_path').addEventListener('click', function showForm() {
+    
+    if ((<HTMLInputElement>this).checked)
+        ipcRenderer.send('default_simulator_path', {
+            name: 'path_set'
+        });
+    else
+        ipcRenderer.send('default_simulator_path', {
+            name: 'path_unset'
+        });
+
+});
+
+
+ipcRenderer.on('set_default_path', function setPathChekbox(event, args) {
+    if (args.name == 'set_path') {
+        (<HTMLInputElement>document.getElementById('default_simulator_path')).checked = false;
+    }
+    else if(args.name == 'unset_path') {
+        (<HTMLInputElement>document.getElementById('default_simulator_path')).checked = true;
+    }
+
+});
+
+window.onload = () => {
+    var evt_response: string = null;
+    if((<HTMLInputElement>document.getElementById('default_simulator_path')).checked)
+        evt_response = 'path_set';
+    else
+        evt_response = 'path_unset';
+   ipcRenderer.on('query_default_path', (event, ...args) => {
+      event.sender.send('query_default_path_reply', {name: evt_response})
+    })
+  }
+
 ipcRenderer.on("startLoader", () => {
     document.body.classList.add("stop-scrolling");
     document.getElementById("loader").classList.remove("d-none");

@@ -1,5 +1,5 @@
 //process.env.NODE_ENV = "development";
- process.env.NODE_ENV = 'production';
+process.env.NODE_ENV = 'production';
 
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import * as path from "path";
@@ -28,7 +28,8 @@ function createWindow(): void {
 
 	let iconPath = path.join(__dirname, "../src/assets/icon.png");
 	if (process.env.NODE_ENV !== "development") {
-		iconPath = path.join(path.resolve(__dirname), "../../assets/icon.png");
+		iconPath = path.join(path.resolve(__dirname), "../src/assets/icon.png");
+		console.log(iconPath);
 	}
 
 	mainWindow = new BrowserWindow({
@@ -43,9 +44,15 @@ function createWindow(): void {
 		},
 	});
 
+	mainWindow.webContents.once('dom-ready', () => {
+		mainWindow.webContents.send('query_default_path')
+		ipcMain.once('query_default_path_reply', (event, args) => {
+		  treatDefaultSim(event, args);
+		})
+	  })
 	// and load the index.html of the app.
 	mainWindow.loadFile(path.join(__dirname, "../index.html"));
-	mainWindow.setMenuBarVisibility(false)
+	//mainWindow.setMenuBarVisibility(false)
 	
 	if (process.env.NODE_ENV !== "development") {
 		mainWindow.removeMenu();
@@ -55,12 +62,7 @@ function createWindow(): void {
 		// Open the DevTools.
 		mainWindow.webContents.openDevTools();
 	}
-
-
 }
-
-// app.disableHardwareAcceleration();
-
 app.whenReady().then(() => {
 	createWindow();
 
@@ -163,6 +165,7 @@ ipcMain.on("simulator_path", (event, args) => {
 			simulator_path = result.filePaths[0];
 			fs.writeFileSync('config.json', simulator_path);
 			console.log(simulator_path);
+			mainWindow.webContents.send('set_default_path', {name:"set_path"});
 		}
 	  }).catch(err => {
 		console.log(err)
@@ -170,27 +173,73 @@ ipcMain.on("simulator_path", (event, args) => {
 
 });
 
+ function checkConfigFile(filename:string, messg:string):boolean {
+	if (filename === null) {
+		const options = {
+			type: 'info',
+			buttons: ['OK'],
+			defaultId: 1,
+			title: 'Information',
+			message: messg,
+		  };
+		
+		dialog.showMessageBoxSync(mainWindow, options);
+		return false;
+	}
+	else 
+	return true;
+}
 
-ipcMain.on("run_simulation", (event, args) => {
+ipcMain.on("default_simulator_path", treatDefaultSim);
+
+function treatDefaultSim(event:any, args:any): void {
+	console.log("am primit " + args.name);
+	var enddir:string = null;
+	if(process.platform == 'win32') {
+		enddir = 'win32';
+	} else if(process.platform == 'darwin') {
+		enddir = 'darwin';
+	} else if(process.platform == 'linux') {
+		enddir = 'linux';
+	}
+	
+	if(args.name === 'path_set') {
+		simulator_path = path.join(__dirname, "../src/assets", enddir);
+		if (process.env.NODE_ENV !== "development") {
+			simulator_path = path.join(path.resolve(__dirname), "../src/assets", enddir);
+		}
+	}
+	else
+		simulator_path = null;
+
+}
+
+
+
+ipcMain.on("run_simulation",  (event, args) => {
 	let proc:any = null;
-	if(process.platform == 'win32')
-			proc = spawn('cmd.exe', [], {
-			name: 'xterm-color',
-			cols: 180,
-			rows: 50,
-			cwd: process.env.HOME,
-			env: process.env
-		});
-	else {
-		proc = spawn('sh', [], {
-			name: 'xterm-color',
-			cols: 180,
-			rows: 50,
-			cwd: process.env.HOME,
-			env: process.env
-		});
+	let bash:string = null;
+	var enddir:string = null;
+	if(process.platform == 'win32') {
+		bash = "cmd.exe";
+		enddir = 'win32';
+	}
+	else if(process.platform == 'darwin') {
+		enddir = 'darwin';
+		bash = 'sh'
+	} else if(process.platform == 'linux') {
+		enddir = 'linux';
+		bash = 'sh'
 	}
 
+	proc = spawn('cmd.exe', [], {
+		name: 'xterm-color',
+		cols: 180,
+		rows: 50,
+		cwd: process.env.HOME,
+		env: process.env
+	});
+	
 	
 	if(simulator_path === null && fs.existsSync('config.json')) {
 		simulator_path = fs.readFileSync('config.json').toString();
@@ -208,61 +257,21 @@ ipcMain.on("run_simulation", (event, args) => {
 		return;
 	}
 
-	if (mapFile === null) {
-		const options = {
-			type: 'info',
-			buttons: ['OK'],
-			defaultId: 1,
-			title: 'Information',
-			message: 'Select the map file!',
-		  };
-		
-		dialog.showMessageBoxSync(mainWindow, options);
+	if(!checkConfigFile(mapFile,'Select the map file!' ))
 		return;
-	}
+	if(!checkConfigFile(simulationFile,'Select the simulation configuration file!' ))
+		return;
+	if(!checkConfigFile(personsFile, 'Select the persons configuration file!'))
+		return;
+	if(!checkConfigFile(antennasFile,'Select the antennas configuration file!' ))
+		return;
 
-	if (simulationFile === null) {
-		const options = {
-			type: 'info',
-			buttons: ['OK'],
-			defaultId: 1,
-			title: 'Information',
-			message: 'Select the simulation configuration file!',
-		  };
-		
-		dialog.showMessageBoxSync(mainWindow, options);
-		return;
-	}
-
-	if (personsFile === null) {
-		const options = {
-			type: 'info',
-			buttons: ['OK'],
-			defaultId: 1,
-			title: 'Information',
-			message: 'Select the persons configuration file!',
-		  };
-		
-		dialog.showMessageBoxSync(mainWindow, options);
-		return;
-	}
-	if (antennasFile === null) {
-		const options = {
-			type: 'info',
-			buttons: ['OK'],
-			defaultId: 1,
-			title: 'Information',
-			message: 'Select the antennas configuration file!',
-		  };
-		
-		dialog.showMessageBoxSync(mainWindow, options);
-		return;
-	}
 	let simulator_exe:string = null;
 	if(process.platform == 'win32')
 		simulator_exe = "simulator.exe";
 	else
 		simulator_exe = 'simulator';
+
 	if(!fs.existsSync(path.join(simulator_path, simulator_exe) )) {
 		const options = {
 			type: 'info',
@@ -275,7 +284,8 @@ ipcMain.on("run_simulation", (event, args) => {
 		dialog.showMessageBoxSync(mainWindow, options);
 		return;
 	}
-	console.log(simulator_path);
+	//console.log(simulator_path);
+	mainWindow.webContents.send("startLoader");
 	let cdircmd : string = null;
 	if(process.platform == 'win32')
 		cdircmd = "cd /d " + os.homedir() + "\r";
@@ -285,8 +295,10 @@ ipcMain.on("run_simulation", (event, args) => {
 	let cmdLine:string = "\"" + path.join(simulator_path, simulator_exe) + "\"" + " -m " + "\"" + mapFile + "\"" + " -s " + "\"" + simulationFile + "\"" + " -a " + "\"" + antennasFile + "\"" +" -p " + "\"" + personsFile + "\""+ "\r";
 	proc.write(cmdLine);
 
-	proc.onData((data:any) => {
+	proc.onData((data:string) => {
 		mainWindow.webContents.send("terminal-incData", data);
+		if(data.includes('End of simulation!'))
+			mainWindow.webContents.send("clearLoader");
 	  });
   
 	// ipcMain.on("terminal-into", (event, data)=> {
@@ -297,6 +309,7 @@ ipcMain.on("run_simulation", (event, args) => {
 		//disposable.dispose();
 		exitDisposable.dispose();
 	})
+//	mainWindow.webContents.send("clearLoader");	
 	
 });
 

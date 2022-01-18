@@ -13,10 +13,6 @@ window.addEventListener("DOMContentLoaded", () => {
 	}
 
 		// go to select action
-		document.getElementById("back").addEventListener("click", function showForm() {
-			ipcRenderer.send("changeWindow", {
-				name: "index",
-			});
-		});
+	
 	// ============================================
 });

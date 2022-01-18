@@ -34,7 +34,7 @@
         position: fixed;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.8);
+        background-color: rgba(0, 0, 0, 0.75);
         z-index: 1040;
     }
 
@@ -55,14 +55,14 @@
 </style>
 
 <body>
-    <div class="loader d-none" id="loader">Se pregătesc datele<br>Vă rugăm așteptați...</div>
+    <div class="loader d-none" id="loader">A simulation is running<br>Please wait to finish...</div>
     <div class="cover d-none" id="cover"></div>
 
     <div class="container">
         
         <div class="row my-1">
             <div class="col-md-12 text-center">
-                <img src="./src/assets/simgui.png" alt="simgui" style="max-width: 800px; max-height: 80px; opacity: 0.7;">
+                <img src="./src/assets/simgui.png" alt="simgui" style="max-width: 800px; max-height: 80px; opacity: 0.9;">
             </div>
         </div>
 
@@ -129,16 +129,20 @@
                 </div>
         </div>
 -->
-        <div class="row mt-3">
-            <div class="col text-center">
-                          
-                    <button class="ms-3 btn btn-dark btn-sm" id="simulator_path">Set simulation software path</button>
-              
+        <div class="row">
+            <div class="col-6 text-center">
+                <button class="ms-3 btn btn-dark btn-sm" id="simulator_path">Set simulation software path</button>
                 </p>
             </div>
+            <div class="col-4 text-center">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="default_simulator_path" checked>
+                    <label class="form-check-label" for="default_simulator_path">Use default simulation software</label>
+                  </div>
+            </div>  
         </div>
     </div>
-
+    
     <!-- You can also require other files to run in this process -->
     <script src="./dist/renderer.js"></script>
 </body>
