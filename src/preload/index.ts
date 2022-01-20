@@ -13,12 +13,17 @@ const term = new Terminal();
 // Open the terminal in #terminal-container
 term.open(document.getElementById('terminal'));
 
-term.onData(e => {
-    ipcRenderer.send("terminal-into", e);
-} );
+// term.onData(e => {
+//     ipcRenderer.send("terminal-into", e);
+// } );
 
-ipcRenderer.on('terminal-incData', (event, data) => {
-    term.write(data);
+ipcRenderer.on('terminal-incData', (event, data:string) => {
+    // if(!data.includes('__EOJ__')) 
+    term.writeln(data);
+    // else {
+    //     var ret = data.replace(/__EOJ__/g,'');
+    //     term.write(ret);
+    // }
 })
 
 

@@ -1,16 +1,17 @@
-//process.env.NODE_ENV = "development";
-process.env.NODE_ENV = 'production';
+process.env.NODE_ENV = "development";
+//process.env.NODE_ENV = 'production';
 
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import * as path from "path";
 import * as fs from 'fs';
 
 
-import {spawn} from "node-pty";
+//import {spawn} from "node-pty";
 
 import * as xml2js from 'xml2js';
-import * as cp from 'child_process'
+import {exec} from 'child_process';
 import * as os from 'os';
+import {spawn} from 'child_process';
 
 let mapFile:string  = null;
 let simulationFile:string  = null;
@@ -52,7 +53,7 @@ function createWindow(): void {
 	  })
 	// and load the index.html of the app.
 	mainWindow.loadFile(path.join(__dirname, "../index.html"));
-	//mainWindow.setMenuBarVisibility(false)
+	mainWindow.setMenuBarVisibility(false)
 	
 	if (process.env.NODE_ENV !== "development") {
 		mainWindow.removeMenu();
@@ -101,8 +102,10 @@ ipcMain.on("map_file", (event, args) => {
 	dialog.showOpenDialog(mainWindow, {
 		properties: ['openFile']
 	  }).then(result => {
-		if(!result.canceled)
+		if(!result.canceled) {
 			mapFile = result.filePaths[0];
+			mainWindow.webContents.send("terminal-incData", 'Map file set to ' + mapFile + '\r');
+		}
 	  }).catch(err => {
 		console.log(err)
 	  })
@@ -115,6 +118,7 @@ ipcMain.on("simulation_file", (event, args) => {
 	}).then(result => {
 		if(!result.canceled)
 			simulationFile = result.filePaths[0];
+			mainWindow.webContents.send("terminal-incData", 'Simulation file set to ' + simulationFile );
 			var parser:any = new xml2js.Parser();
 			fs.readFile(simulationFile, function(err, data) {
 				parser.parseString(data, function (err:any, result:any) {
@@ -138,8 +142,10 @@ ipcMain.on("persons_file", (event, args) => {
 	dialog.showOpenDialog(mainWindow, {
 		properties: ['openFile']
 	  }).then(result => {
-		if(!result.canceled)
+		if(!result.canceled) {
 			personsFile = result.filePaths[0];
+			mainWindow.webContents.send("terminal-incData", 'Persons file set to ' + personsFile );
+		}
 	  }).catch(err => {
 		console.log(err)
 	  })
@@ -149,12 +155,13 @@ ipcMain.on("antennas_file", (event, args) => {
 	dialog.showOpenDialog(mainWindow, {
 		properties: ['openFile']
 	  }).then(result => {
-		if(!result.canceled)
+		if(!result.canceled) {
 			antennasFile = result.filePaths[0];
+			mainWindow.webContents.send("terminal-incData", 'Antennas file set to ' + antennasFile );
+		}
 	  }).catch(err => {
 		console.log(err)
 	  })
-
 });
 
 ipcMain.on("simulator_path", (event, args) => {
@@ -214,33 +221,19 @@ function treatDefaultSim(event:any, args:any): void {
 
 }
 
-
-
 ipcMain.on("run_simulation",  (event, args) => {
 	let proc:any = null;
 	let bash:string = null;
 	var enddir:string = null;
 	if(process.platform == 'win32') {
-		bash = "cmd.exe";
 		enddir = 'win32';
 	}
 	else if(process.platform == 'darwin') {
 		enddir = 'darwin';
-		bash = 'sh'
 	} else if(process.platform == 'linux') {
 		enddir = 'linux';
-		bash = 'sh'
 	}
 
-	proc = spawn('cmd.exe', [], {
-		name: 'xterm-color',
-		cols: 180,
-		rows: 50,
-		cwd: process.env.HOME,
-		env: process.env
-	});
-	
-	
 	if(simulator_path === null && fs.existsSync('config.json')) {
 		simulator_path = fs.readFileSync('config.json').toString();
 	}
@@ -286,38 +279,32 @@ ipcMain.on("run_simulation",  (event, args) => {
 	}
 	//console.log(simulator_path);
 	mainWindow.webContents.send("startLoader");
-	let cdircmd : string = null;
-	if(process.platform == 'win32')
-		cdircmd = "cd /d " + os.homedir() + "\r";
-	else
-		cdircmd = "cd " + os.homedir() + "\r";
-	proc.write(cdircmd);
-	let cmdLine:string = "\"" + path.join(simulator_path, simulator_exe) + "\"" + " -m " + "\"" + mapFile + "\"" + " -s " + "\"" + simulationFile + "\"" + " -a " + "\"" + antennasFile + "\"" +" -p " + "\"" + personsFile + "\""+ "\r";
-	proc.write(cmdLine);
-
-	proc.onData((data:string) => {
-		mainWindow.webContents.send("terminal-incData", data);
-		if(data.includes('End of simulation!'))
-			mainWindow.webContents.send("clearLoader");
-	  });
-  
-	// ipcMain.on("terminal-into", (event, data)=> {
-	// 	proc.write(data);
-	// })
-
-	const exitDisposable = proc.onExit(() => {
-		//disposable.dispose();
-		exitDisposable.dispose();
-	})
-//	mainWindow.webContents.send("clearLoader");	
 	
+	var prc = spawn(path.join(simulator_path, simulator_exe), ["-m", mapFile, "-s", simulationFile, "-a", antennasFile, "-p", personsFile], {cwd: os.homedir()});
+
+	prc.stdout.setEncoding('utf8');
+	prc.stdout.on('data', function (data:any) {
+	    var str = data.toString()
+	    var lines = str.split(/(\r?\n)/g);
+	    //console.log(lines.join(""));
+		mainWindow.webContents.send("terminal-incData", data);
+	});
+
+	prc.on('close', function (code:any) {
+		mainWindow.webContents.send("clearLoader");
+		let data = os.homedir() + '>';
+		mainWindow.webContents.send("terminal-incData", data);
+    	//console.log('process exit code ' + code);
+	});
+
+
 });
 
 ipcMain.on("open_output", (event, args) => {
 	if(outout_folder != null && process.platform == 'win32')
-		cp.exec("start "+ path.join(os.homedir(), outout_folder) );
+		exec("start "+ path.join(os.homedir(), outout_folder) );
 	else if (outout_folder != null && process.platform == 'darwin') {
-		cp.exec("open "+ path.join(os.homedir(), outout_folder) );
+		exec("open "+ path.join(os.homedir(), outout_folder) );
 	}
 	else {
 		const options = {
