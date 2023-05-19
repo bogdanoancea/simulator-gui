@@ -122,11 +122,11 @@ ipcMain.on("simulation_file", (event, args) => {
 			var parser:any = new xml2js.Parser();
 			fs.readFile(simulationFile, function(err, data) {
 				parser.parseString(data, function (err:any, result:any) {
-					var odir: string = result.simulation.output_dir[0];
-					if(odir != undefined)
-						outout_folder = odir;
-					else
-						outout_folder = "output";
+					if(result.simulation.output_dir != null) {
+						var odir: string = result.simulation.output_dir[0];
+						if(odir != undefined)
+							outout_folder = odir;
+					}
 				});
 			});
 		
@@ -301,10 +301,13 @@ ipcMain.on("run_simulation",  (event, args) => {
 });
 
 ipcMain.on("open_output", (event, args) => {
-	if(outout_folder != null && process.platform == 'win32')
-		exec("start "+ path.join(os.homedir(), outout_folder) );
+	if(outout_folder != null && process.platform == 'win32') {
+		//console.log("open "+ "\"" + path.join(os.homedir(), outout_folder) + "\"");
+		exec("start "+ "\"" + path.join(os.homedir(), outout_folder) + "\"");
+	}
 	else if (outout_folder != null && process.platform == 'darwin') {
-		exec("open "+ path.join(os.homedir(), outout_folder) );
+		
+		exec("open "+ "\"" + path.join(os.homedir(), outout_folder) + "\"");
 	}
 	else {
 		const options = {
