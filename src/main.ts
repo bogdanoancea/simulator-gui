@@ -122,6 +122,7 @@ ipcMain.on("simulation_file", (event, args) => {
 			var parser:any = new xml2js.Parser();
 			fs.readFile(simulationFile, function(err, data) {
 				parser.parseString(data, function (err:any, result:any) {
+					
 					var odir: string = result.simulation.output_dir[0];
 					if(odir != undefined)
 						outout_folder = odir;
